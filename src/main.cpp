@@ -9,10 +9,13 @@
 bool init();     // initializes the SDL and renderer
 void drawNet();  // draws a net(centre line) and border
 // handles key presses
-void handleKeyDown(const SDL_Event& event, std::array<bool, 4>& buttons);
+void handleKeyDown(const SDL_Event& event, std::array<bool, 4>& buttons,
+                   Ball& ball);
 void handleKeyUp(const SDL_Event& event, std::array<bool, 4>& buttons);
 // update the paddle state per frame according to the buttons pressed
 void updatePaddles(const std::array<bool, 4>& buttons, Paddle& p1, Paddle& p2);
+// checks for collison between a ball and a paddle
+bool checkCollision(const Ball& ball, const Paddle& paddle);
 void close();
 
 enum buttons { paddleOneUp, paddleOneDown, paddleTwoUp, paddleTwoDown, max };
@@ -27,7 +30,7 @@ int main(int argc, char* argv[]) {
 
   Ball ball{{screen::screen_width / 2 - entity_data::ballRadius / 2,
              screen::screen_height / 2 - entity_data::ballRadius / 2},
-            {entity_data::ballSpeed, entity_data::ballSpeed * (float(screen::screen_height)/screen::screen_width)}};
+            {entity_data::ballSpeed, 0}};
 
   Paddle p1{{30 + entity_data::paddleWidth,
              screen::screen_height / 2 - entity_data::paddleHeight / 2},
@@ -60,7 +63,7 @@ int main(int argc, char* argv[]) {
         if (event.key.keysym.sym == SDLK_ESCAPE)
           quit = true;
         else {
-          handleKeyDown(event, buttons);
+          handleKeyDown(event, buttons, ball);
         }
       }
       // when a key is lift, pass into the handler
@@ -77,6 +80,11 @@ int main(int argc, char* argv[]) {
     p1.move(dt);
     p2.move(dt);
     ball.move(dt);
+
+    if (checkCollision(ball, p1))
+      ball.m_velocity.m_xPosition = -ball.m_velocity.m_xPosition;
+    if (checkCollision(ball, p2))
+      ball.m_velocity.m_xPosition = -ball.m_velocity.m_xPosition;
 
     p1Score.draw(window::mainRenderer);
     p2Score.draw(window::mainRenderer);
@@ -168,7 +176,8 @@ void drawNet() {
   // SDL_SetRenderDrawColor(mainRenderer, 0xff, 0xff, 0xff, 0xff);
 }
 
-void handleKeyDown(const SDL_Event& event, std::array<bool, 4>& buttons) {
+void handleKeyDown(const SDL_Event& event, std::array<bool, 4>& buttons,
+                   Ball& ball) {
   switch (event.key.keysym.sym) {
     case SDLK_w:
       buttons[paddleOneUp] = true;
@@ -222,6 +231,22 @@ void updatePaddles(const std::array<bool, 4>& buttons, Paddle& p1, Paddle& p2) {
     p2.m_velocity.m_yPosition = paddleSpeed;
   else
     p2.m_velocity.m_yPosition = 0.0f;
+}
+
+bool checkCollision(const Ball& ball, const Paddle& paddle) {
+  int ballx1 = ball.m_current_position.m_xPosition;
+  int ballx2 = ballx1 + entity_data::ballRadius;
+  int bally1 = ball.m_current_position.m_yPosition;
+  int bally2 = bally1 + entity_data::ballRadius;
+
+  int paddlex1 = paddle.m_current_position.m_xPosition;
+  int paddlex2 = paddlex1 + entity_data::paddleWidth;
+  int paddley1 = paddle.m_current_position.m_yPosition;
+  int paddley2 = paddley1 + entity_data::paddleHeight;
+
+  // look for a non overlapping axis, if one exists, return false
+  return !(paddley2 < bally1 || bally2 < paddley1 || paddlex2 < ballx1 ||
+           ballx2 < paddlex1);
 }
 
 void close() {

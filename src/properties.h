@@ -27,7 +27,7 @@ constexpr int ballRadius{15};
 constexpr int paddleWidth{10};
 constexpr int paddleHeight{70};
 constexpr float paddleSpeed{1.0f};
-constexpr float ballSpeed{1.0f};
+constexpr float ballSpeed{0.75f};
 }  // namespace entity_data
 
 #endif  // PROPERTIES_H
