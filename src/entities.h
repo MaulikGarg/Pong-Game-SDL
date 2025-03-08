@@ -11,7 +11,7 @@ enum class collisionType { col_none, col_top, col_middle, col_bottom, col_left, 
 // direction
 struct collision {
   collisionType type;
-  float penetrated_x;
+  float penetrated;
 };
 
 class Ball {
@@ -20,6 +20,7 @@ class Ball {
   void draw(SDL_Renderer* renderer);
   void move(float dt);
   void collide(const collision& col);
+  void collideWall(const collision& col);
 
   Vec2d m_current_position;
   Vec2d m_velocity;
@@ -48,7 +49,7 @@ class Score {
   SDL_Surface* m_temporary;
 };
 
-// checks for collison between a ball and a paddle
+// checks for collisons
 collision checkCollision(const Ball& ball, const Paddle& paddle);
-
+collision checkWallCol(const Ball& ball);
 #endif

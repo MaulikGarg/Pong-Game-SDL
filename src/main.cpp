@@ -86,6 +86,9 @@ int main(int argc, char* argv[]) {
     else if((col =  checkCollision(ball, p2)).type != collisionType::col_none){
       ball.collide(col);
     }
+    else if((col = checkWallCol(ball)).type != collisionType::col_none){
+      ball.collideWall(col);
+    }
 
     p1Score.draw(window::mainRenderer);
     p2Score.draw(window::mainRenderer);

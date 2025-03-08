@@ -113,12 +113,12 @@ collision checkCollision(const Ball& ball, const Paddle& paddle) {
   // if the ball is coming towards the left paddle, i.e, velocity is less than
   // 0:
   if (ball.m_velocity.m_xPosition < 0) {
-    col.penetrated_x = paddleRight - ballLeft;
+    col.penetrated = paddleRight - ballLeft;
   }
   // if the ball is coming towards the right paddle, i.e, velocity is more than
   // 0:
   else if (ball.m_velocity.m_xPosition > 0) {
-    col.penetrated_x = paddleLeft - ballRight;
+    col.penetrated = paddleLeft - ballRight;
   }
 
   // now check for which part (top/middle/bottom) the collision happened
@@ -133,13 +133,63 @@ collision checkCollision(const Ball& ball, const Paddle& paddle) {
   return col;
 }
 
-void Ball::collide(const collision& col){
-  m_current_position.m_xPosition += col.penetrated_x;
+collision checkWallCol(const Ball& ball) {
+  using namespace entity_data;
+
+  collision col{};  // none, 0 penetration
+  int ballLeft = ball.m_current_position.m_xPosition;
+  int ballRight = ballLeft + ballRadius;
+  int ballTop = ball.m_current_position.m_yPosition;
+  int ballBottom = ballTop + ballRadius;
+
+  if (ballLeft < 0.0f) {
+    col.type = collisionType::col_left;
+    return col;
+  } else if (ballRight > screen::screen_width) {
+    col.type = collisionType::col_right;
+    return col;
+  } else if (ballTop < 0.0f) {
+    col.type = collisionType::col_top;
+    col.penetrated = -ballTop;
+    return col;
+  } else if (ballBottom > screen::screen_height) {
+    col.type = collisionType::col_bottom;
+    col.penetrated = screen::screen_height - ballBottom;
+  }
+
+  return col;
+}
+
+void Ball::collide(const collision& col) {
+  m_current_position.m_xPosition += col.penetrated;
   m_velocity.m_xPosition *= -1;
 
-  if(col.type == collisionType::col_top){
+  if (col.type == collisionType::col_top) {
     m_velocity.m_yPosition = -0.75f * entity_data::ballSpeed;
-  } else if(col.type == collisionType::col_bottom){
+  } else if (col.type == collisionType::col_bottom) {
     m_velocity.m_yPosition = 0.75f * entity_data::ballSpeed;
+  }
+}
+
+void Ball::collideWall(const collision& col) {
+  using namespace screen;
+  if (col.type == collisionType::col_top ||
+      col.type == collisionType::col_bottom) {
+    m_current_position.m_yPosition += col.penetrated;
+    m_velocity.m_yPosition *= -1;
+    return;
+  }
+
+  // for LR walls, reset ball to center and launch
+  m_current_position.m_xPosition = screen_width / 2 - m_ball_properties.w;
+  m_current_position.m_yPosition = screen_height / 2 - m_ball_properties.h;
+  m_velocity.m_yPosition = 0.75 * entity_data::ballSpeed;
+
+  if (col.type == collisionType::col_left) {
+    m_velocity.m_xPosition = entity_data::ballSpeed;
+  }
+
+  else if (col.type == collisionType::col_right) {
+    m_velocity.m_xPosition = -entity_data::ballSpeed;
   }
 }
