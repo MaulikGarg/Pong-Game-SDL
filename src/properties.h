@@ -4,6 +4,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
 #include <iostream>
 #include <string>
 
@@ -31,5 +32,10 @@ constexpr int paddleHeight{60};
 constexpr float paddleSpeed{1.0f};
 constexpr float ballSpeed{0.65f};
 }  // namespace entity_data
+
+namespace music{
+  extern Mix_Chunk* wallHit;
+  extern Mix_Chunk* paddleHit;
+}
 
 #endif  // PROPERTIES_H

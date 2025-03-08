@@ -14,6 +14,7 @@ void handleKeyDown(const SDL_Event& event, std::array<bool, 4>& buttons,
                    Ball& ball);
 void handleKeyUp(const SDL_Event& event, std::array<bool, 4>& buttons);
 // update the paddle state per frame according to the buttons pressed
+void collisionHandler(Ball& ball, Paddle& p1, Paddle& p2, Score& p1Score, Score& p2Score  );
 void updatePaddles(const std::array<bool, 4>& buttons, Paddle& p1, Paddle& p2);
 void close();
 
@@ -85,20 +86,7 @@ int main(int argc, char* argv[]) {
     p2.move(dt);
     ball.move(dt);
 
-    collision col{};
-    if ((col = checkCollision(ball, p1)).type != collisionType::col_none) {
-      ball.collide(col);
-    } else if ((col = checkCollision(ball, p2)).type !=
-               collisionType::col_none) {
-      ball.collide(col);
-    } else if ((col = checkWallCol(ball)).type != collisionType::col_none) {
-      ball.collideWall(col);
-      if (col.type == collisionType::col_left) {
-        p2Score.setScore(p2Score.m_score++);
-      } else if (col.type == collisionType::col_right) {
-        p1Score.setScore(p1Score.m_score++);
-      }
-    }
+    collisionHandler(ball, p1, p2, p1Score, p2Score);
 
     p1Score.draw(window::mainRenderer);
     p2Score.draw(window::mainRenderer);
@@ -132,7 +120,7 @@ bool init() {
 
   // initialize the libraries
   {
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
       std::cerr << "SDL INITIALIZATION FAILURE: " << SDL_GetError() << '\n';
       return FAILURE;
     } else {
@@ -174,6 +162,26 @@ bool init() {
       return FAILURE;
     } else {
       std::cout << "Font set.\n";
+    }
+  }
+
+  // set the sound effects
+  {
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048)) {
+      std::cerr << "Mixer Settings failed: " << Mix_GetError() << '\n';
+      return FAILURE;
+    } else {
+      std::cout << "Mixer set.\n";
+    }
+
+    music::paddleHit = Mix_LoadWAV("../assets/1noisecollector.wav");
+    music::wallHit = Mix_LoadWAV("../assets/2noisecollector.wav");
+
+    if (!music::paddleHit || !music::wallHit) {
+      std::cerr << "Sound effect setting failed: " << Mix_GetError() << '\n';
+      return FAILURE;
+    } else {
+      std::cout << "Sounds set.\n";
     }
   }
 
@@ -258,12 +266,44 @@ void updatePaddles(const std::array<bool, 4>& buttons, Paddle& p1, Paddle& p2) {
     p2.m_velocity.m_yPosition = 0.0f;
 }
 
+void collisionHandler(Ball& ball, Paddle& p1, Paddle& p2, Score& p1Score, Score& p2Score ){
+  collision col{};
+
+  if ((col = checkCollision(ball, p1)).type != collisionType::col_none) {
+    ball.collide(col);
+    Mix_PlayChannel(-1, music::paddleHit, 1);
+
+
+  } else if ((col = checkCollision(ball, p2)).type !=
+             collisionType::col_none) {
+    ball.collide(col);
+    Mix_PlayChannel(-1, music::paddleHit, 1);
+
+
+  } else if ((col = checkWallCol(ball)).type != collisionType::col_none) {
+    ball.collideWall(col);
+    Mix_PlayChannel(-1, music::wallHit, 1);
+    switch (col.type) {
+      case collisionType::col_left:
+        p2Score.setScore(p2Score.m_score++);
+        break;
+      case collisionType::col_right:
+        p1Score.setScore(p1Score.m_score++);
+        break;
+    }
+  }
+}
+
 void close() {
   using namespace window;
 
   SDL_DestroyRenderer(mainRenderer);
   SDL_DestroyWindow(mainWindow);
   TTF_CloseFont(mainFont);
+  Mix_FreeChunk(music::paddleHit);
+  Mix_FreeChunk(music::wallHit);
+  Mix_CloseAudio();
+  Mix_Quit();
   TTF_Quit();
   SDL_Quit();
 }
