@@ -6,8 +6,9 @@
 #include "entities.h"
 #include "properties.h"
 
-bool init();     // initializes the SDL and renderer
-void drawNet();  // draws a net(centre line) and border
+bool init();  // initializes the SDL and renderer
+void drawNet(SDL_Rect& left,
+             SDL_Rect& right);  // draws a net(centre line) and border
 // handles key presses
 void handleKeyDown(const SDL_Event& event, std::array<bool, 4>& buttons,
                    Ball& ball);
@@ -25,6 +26,9 @@ int main(int argc, char* argv[]) {
   } else {
     std::cout << "INITIALIZATION SUCCESS.\n";
   }
+
+  SDL_Rect left{0, 0, 8, screen::screen_height};
+  SDL_Rect right{screen::screen_width - 8, 0, 8, screen::screen_height};
 
   Ball ball{{screen::screen_width / 2 - entity_data::ballRadius / 2,
              screen::screen_height / 2 - entity_data::ballRadius / 2},
@@ -46,8 +50,10 @@ int main(int argc, char* argv[]) {
   SDL_Event event;
   // represents the buttons enum, sets all pressed to false
   std::array<bool, 4> buttons{};
-
+  Uint32 frameStart{};
+  Uint32 frameTime{};
   while (!quit) {
+    frameStart = SDL_GetTicks();
     // record the time before the frame has been rendered
     auto startTime{std::chrono::high_resolution_clock::now()};
     // pulls events continuously, eliminates outer loop at close or Esc
@@ -72,22 +78,26 @@ int main(int argc, char* argv[]) {
 
     SDL_SetRenderDrawColor(window::mainRenderer, 0x00, 0x00, 0x00, 0xff);
     SDL_RenderClear(window::mainRenderer);
-    drawNet();
+    drawNet(left, right);
 
     updatePaddles(buttons, p1, p2);
     p1.move(dt);
     p2.move(dt);
     ball.move(dt);
 
-    collision col {}; 
-    if((col =  checkCollision(ball, p1)).type != collisionType::col_none){
+    collision col{};
+    if ((col = checkCollision(ball, p1)).type != collisionType::col_none) {
       ball.collide(col);
-    }
-    else if((col =  checkCollision(ball, p2)).type != collisionType::col_none){
+    } else if ((col = checkCollision(ball, p2)).type !=
+               collisionType::col_none) {
       ball.collide(col);
-    }
-    else if((col = checkWallCol(ball)).type != collisionType::col_none){
+    } else if ((col = checkWallCol(ball)).type != collisionType::col_none) {
       ball.collideWall(col);
+      if (col.type == collisionType::col_left) {
+        p2Score.setScore(p2Score.m_score++);
+      } else if (col.type == collisionType::col_right) {
+        p1Score.setScore(p1Score.m_score++);
+      }
     }
 
     p1Score.draw(window::mainRenderer);
@@ -96,6 +106,11 @@ int main(int argc, char* argv[]) {
     p2.draw(window::mainRenderer);
     ball.draw(window::mainRenderer);
     SDL_RenderPresent(window::mainRenderer);
+
+    frameTime = SDL_GetTicks() - frameStart;
+    if (frameTime < window::frameDelay) {
+      SDL_Delay(window::frameDelay - frameTime);
+    }
 
     // record time when frame finished rendering
     auto endTime{std::chrono::high_resolution_clock::now()};
@@ -165,7 +180,7 @@ bool init() {
   return SUCCESS;
 }
 
-void drawNet() {
+void drawNet(SDL_Rect& left, SDL_Rect& right) {
   using namespace window;
   SDL_SetRenderDrawColor(mainRenderer, 0xff, 0xff, 0xff, 0xff);
 
@@ -177,7 +192,13 @@ void drawNet() {
     }
   }
 
-  // SDL_SetRenderDrawColor(mainRenderer, 0xff, 0xff, 0xff, 0xff);
+  // draw the edges
+  SDL_SetRenderDrawColor(mainRenderer, 0xff, 0x00, 0x00, 0xff);
+  SDL_RenderFillRect(window::mainRenderer, &left);
+  SDL_RenderFillRect(window::mainRenderer, &right);
+
+  // set color back to white
+  SDL_SetRenderDrawColor(mainRenderer, 0xff, 0xff, 0xff, 0xff);
 }
 
 void handleKeyDown(const SDL_Event& event, std::array<bool, 4>& buttons,

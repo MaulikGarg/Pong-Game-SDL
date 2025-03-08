@@ -2,7 +2,7 @@
 
 #include "properties.h"
 
-Ball::Ball(Vec2d pre_position, Vec2d velocity)
+Ball::Ball(Vec2d&& pre_position, Vec2d&& velocity)
     : m_current_position{pre_position}, m_velocity{velocity} {
   m_ball_properties.x = m_current_position.m_xPosition;
   m_ball_properties.y = m_current_position.m_yPosition;
@@ -19,7 +19,7 @@ void Ball::draw(SDL_Renderer* renderer) {
 
 void Ball::move(float dt) { m_current_position += m_velocity * dt; }
 
-Paddle::Paddle(Vec2d pre_position, Vec2d velocity)
+Paddle::Paddle(Vec2d&& pre_position, Vec2d&& velocity)
     : m_current_position{pre_position}, m_velocity{velocity} {
   m_paddle_properties.x = m_current_position.m_xPosition;
   m_paddle_properties.y = m_current_position.m_yPosition;
@@ -48,11 +48,23 @@ void Paddle::move(float dt) {
   }
 }
 
-Score::Score(Vec2d position) {
+Score::Score(Vec2d&& position) : m_current_score{nullptr}, m_temporary {nullptr} {
   m_position.x = position.m_xPosition;
   m_position.y = position.m_yPosition;
+  setScore(0);
+}
 
-  m_temporary = TTF_RenderText_Solid(window::mainFont, "0", {0xff, 0xff, 0xff});
+Score::~Score() {
+  SDL_FreeSurface(m_temporary);
+  SDL_DestroyTexture(m_current_score);
+}
+
+void Score::setScore(int score){
+
+  if(m_temporary) SDL_FreeSurface(m_temporary);
+  if(m_current_score) SDL_DestroyTexture(m_current_score);
+
+  m_temporary = TTF_RenderText_Solid(window::mainFont, std::to_string(score).c_str(), {0xff, 0xff, 0xff});
 
   if (!m_temporary) {
     std::cerr << "Font Surface Creation Failed: " << TTF_GetError() << '\n';
@@ -68,13 +80,8 @@ Score::Score(Vec2d position) {
 
   SDL_QueryTexture(m_current_score, nullptr, nullptr, &m_position.w,
                    &m_position.h);
-}
 
-Score::~Score() {
-  SDL_FreeSurface(m_temporary);
-  SDL_DestroyTexture(m_current_score);
 }
-
 void Score::draw(SDL_Renderer* renderer) {
   SDL_RenderCopy(renderer, m_current_score, nullptr, &m_position);
 }
@@ -180,9 +187,9 @@ void Ball::collideWall(const collision& col) {
     return;
   }
 
-  // for LR walls, reset ball to center and launch
+  // for LR walls, reset ball to top center and launch
   m_current_position.m_xPosition = screen_width / 2 - m_ball_properties.w;
-  m_current_position.m_yPosition = screen_height / 2 - m_ball_properties.h;
+  m_current_position.m_yPosition = 10.0f;
   m_velocity.m_yPosition = 0.75 * entity_data::ballSpeed;
 
   if (col.type == collisionType::col_left) {

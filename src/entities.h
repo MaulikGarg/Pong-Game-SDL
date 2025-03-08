@@ -16,7 +16,7 @@ struct collision {
 
 class Ball {
  public:
-  Ball(Vec2d pre_position, Vec2d velocity);
+  Ball(Vec2d&& pre_position, Vec2d&& velocity);
   void draw(SDL_Renderer* renderer);
   void move(float dt);
   void collide(const collision& col);
@@ -29,7 +29,7 @@ class Ball {
 
 class Paddle {
  public:
-  Paddle(Vec2d pre_position, Vec2d velocity);
+  Paddle(Vec2d&& pre_position, Vec2d&& velocity);
   void draw(SDL_Renderer* renderer);
   void move(float dt);
 
@@ -40,10 +40,12 @@ class Paddle {
 
 class Score {
  public:
-  Score(Vec2d position);
+  Score(Vec2d&& position);
   ~Score();
+  void setScore(int score);
   void draw(SDL_Renderer* renderer);
 
+  int m_score{};
   SDL_Texture* m_current_score;
   SDL_Rect m_position;
   SDL_Surface* m_temporary;

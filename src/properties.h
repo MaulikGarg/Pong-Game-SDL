@@ -16,6 +16,8 @@ constexpr int screen_height{720};
 }  // namespace screen
 
 namespace window {
+constexpr int maxFPS {60};
+constexpr int frameDelay{1000/maxFPS};
 const std::string fontPath{"../assets/mononoki.ttf"};
 extern SDL_Window* mainWindow;
 extern SDL_Renderer* mainRenderer;
@@ -25,9 +27,9 @@ extern TTF_Font* mainFont;
 namespace entity_data {
 constexpr int ballRadius{15};
 constexpr int paddleWidth{10};
-constexpr int paddleHeight{100};
+constexpr int paddleHeight{60};
 constexpr float paddleSpeed{1.0f};
-constexpr float ballSpeed{0.5f};
+constexpr float ballSpeed{0.65f};
 }  // namespace entity_data
 
 #endif  // PROPERTIES_H
