@@ -17,9 +17,7 @@ void Ball::draw(SDL_Renderer* renderer) {
   SDL_RenderFillRect(window::mainRenderer, &m_ball_properties);
 }
 
-void Ball::move(float dt){
-  m_current_position += m_velocity*dt;
-}
+void Ball::move(float dt) { m_current_position += m_velocity * dt; }
 
 Paddle::Paddle(Vec2d pre_position, Vec2d velocity)
     : m_current_position{pre_position}, m_velocity{velocity} {
@@ -79,4 +77,69 @@ Score::~Score() {
 
 void Score::draw(SDL_Renderer* renderer) {
   SDL_RenderCopy(renderer, m_current_score, nullptr, &m_position);
+}
+
+collision checkCollision(const Ball& ball, const Paddle& paddle) {
+  using namespace entity_data;
+
+  collision col{};  // none, 0 penetration
+
+  int ballLeft = ball.m_current_position.m_xPosition;
+  int ballRight = ballLeft + ballRadius;
+  int ballTop = ball.m_current_position.m_yPosition;
+  int ballBottom = ballTop + ballRadius;
+
+  int paddleLeft = paddle.m_current_position.m_xPosition;
+  int paddleRight = paddleLeft + paddleWidth;
+  int paddleTop = paddle.m_current_position.m_yPosition;
+  int paddleBottom = paddleTop + paddleHeight;
+
+  // if true then no collision happened, return empty struct
+  if (paddleBottom < ballTop || ballBottom < paddleTop ||
+      paddleRight < ballLeft || ballRight < paddleLeft)
+    return col;
+
+  // get the co ordinates of the paddle's top and middle divider
+  float paddleRangeMiddle =
+      paddleBottom -
+      1 / 0.3 * paddleHeight;  // the middle is 1/3 above the bottom
+  float paddleRangeTop = paddleRangeMiddle -
+                         1 / 0.3 * paddleHeight;  // the top is 1/3 above middle
+
+  // penetration ;) in this wholesome game,
+  // refers to how deep the L/R edge of the ball rectangle goes
+  // inside the R/L edge of the paddle rectangle when the ball is collided
+
+  // if the ball is coming towards the left paddle, i.e, velocity is less than
+  // 0:
+  if (ball.m_velocity.m_xPosition < 0) {
+    col.penetrated_x = paddleRight - ballLeft;
+  }
+  // if the ball is coming towards the right paddle, i.e, velocity is more than
+  // 0:
+  else if (ball.m_velocity.m_xPosition > 0) {
+    col.penetrated_x = paddleLeft - ballRight;
+  }
+
+  // now check for which part (top/middle/bottom) the collision happened
+  if (ballBottom > paddleTop && ballBottom < paddleRangeTop) {
+    col.type = collisionType::col_top;
+  } else if (ballBottom > paddleRangeTop && ballBottom < paddleRangeMiddle) {
+    col.type = collisionType::col_middle;
+  } else {
+    col.type = collisionType::col_bottom;
+  }
+
+  return col;
+}
+
+void Ball::collide(const collision& col){
+  m_current_position.m_xPosition += col.penetrated_x;
+  m_velocity.m_xPosition *= -1;
+
+  if(col.type == collisionType::col_top){
+    m_velocity.m_yPosition = -0.75f * entity_data::ballSpeed;
+  } else if(col.type == collisionType::col_bottom){
+    m_velocity.m_yPosition = 0.75f * entity_data::ballSpeed;
+  }
 }

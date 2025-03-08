@@ -14,8 +14,6 @@ void handleKeyDown(const SDL_Event& event, std::array<bool, 4>& buttons,
 void handleKeyUp(const SDL_Event& event, std::array<bool, 4>& buttons);
 // update the paddle state per frame according to the buttons pressed
 void updatePaddles(const std::array<bool, 4>& buttons, Paddle& p1, Paddle& p2);
-// checks for collison between a ball and a paddle
-bool checkCollision(const Ball& ball, const Paddle& paddle);
 void close();
 
 enum buttons { paddleOneUp, paddleOneDown, paddleTwoUp, paddleTwoDown, max };
@@ -81,10 +79,13 @@ int main(int argc, char* argv[]) {
     p2.move(dt);
     ball.move(dt);
 
-    if (checkCollision(ball, p1))
-      ball.m_velocity.m_xPosition = -ball.m_velocity.m_xPosition;
-    if (checkCollision(ball, p2))
-      ball.m_velocity.m_xPosition = -ball.m_velocity.m_xPosition;
+    collision col {}; 
+    if((col =  checkCollision(ball, p1)).type != collisionType::col_none){
+      ball.collide(col);
+    }
+    else if((col =  checkCollision(ball, p2)).type != collisionType::col_none){
+      ball.collide(col);
+    }
 
     p1Score.draw(window::mainRenderer);
     p2Score.draw(window::mainRenderer);
@@ -231,22 +232,6 @@ void updatePaddles(const std::array<bool, 4>& buttons, Paddle& p1, Paddle& p2) {
     p2.m_velocity.m_yPosition = paddleSpeed;
   else
     p2.m_velocity.m_yPosition = 0.0f;
-}
-
-bool checkCollision(const Ball& ball, const Paddle& paddle) {
-  int ballx1 = ball.m_current_position.m_xPosition;
-  int ballx2 = ballx1 + entity_data::ballRadius;
-  int bally1 = ball.m_current_position.m_yPosition;
-  int bally2 = bally1 + entity_data::ballRadius;
-
-  int paddlex1 = paddle.m_current_position.m_xPosition;
-  int paddlex2 = paddlex1 + entity_data::paddleWidth;
-  int paddley1 = paddle.m_current_position.m_yPosition;
-  int paddley2 = paddley1 + entity_data::paddleHeight;
-
-  // look for a non overlapping axis, if one exists, return false
-  return !(paddley2 < bally1 || bally2 < paddley1 || paddlex2 < ballx1 ||
-           ballx2 < paddlex1);
 }
 
 void close() {
