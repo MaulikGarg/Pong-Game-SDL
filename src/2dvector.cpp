@@ -9,6 +9,10 @@ Vec2d& Vec2d::operator*=(const Vec2d& rhs) {
   return *this;
 }
 
+Vec2d Vec2d::operator*(float rhs){
+  return {m_xPosition*rhs, m_yPosition*rhs};
+}
+
 Vec2d& Vec2d::operator+=(const Vec2d& rhs) {
   m_xPosition += rhs.m_xPosition;
   m_yPosition += rhs.m_yPosition;

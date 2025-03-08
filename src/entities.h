@@ -6,19 +6,24 @@
 
 class Ball {
  public:
-  Ball(Vec2d pre_position);
+  Ball(Vec2d pre_position, Vec2d velocity);
   void draw(SDL_Renderer* renderer);
+  void move(float dt);
 
   Vec2d m_current_position;
+  Vec2d m_velocity;
   SDL_Rect m_ball_properties;
 };
 
 class Paddle {
  public:
-  Paddle(Vec2d pre_position);
+  Paddle(Vec2d pre_position, Vec2d velocity);
   void draw(SDL_Renderer* renderer);
+  void move(float dt);
+
 
   Vec2d m_current_position;
+  Vec2d m_velocity;
   SDL_Rect m_paddle_properties;
 };
 
