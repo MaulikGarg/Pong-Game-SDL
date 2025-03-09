@@ -89,11 +89,11 @@ int main(int argc, char* argv[]) {
 
     collisionHandler(ball, p1, p2, p1Score, p2Score);
 
-    p1Score.draw(window::mainRenderer);
-    p2Score.draw(window::mainRenderer);
-    p1.draw(window::mainRenderer);
-    p2.draw(window::mainRenderer);
-    ball.draw(window::mainRenderer);
+    p1Score.draw();
+    p2Score.draw();
+    p1.draw();
+    p2.draw();
+    ball.draw();
     SDL_RenderPresent(window::mainRenderer);
 
     frameTime = SDL_GetTicks() - frameStart;
@@ -274,19 +274,19 @@ void collisionHandler(Ball& ball, Paddle& p1, Paddle& p2, Score& p1Score,
   if ((col = checkCollision(ball, p1)).type == collisionType::col_paddle) {
 
     ball.collide(p1, col);
-    Mix_PlayChannel(-1, music::paddleHit, 1);
+    Mix_PlayChannel(-1, music::paddleHit, 0);
 
   } else if ((col = checkCollision(ball, p2)).type ==
              collisionType::col_paddle) {
 
-    ball.collide(p1, col);
-    Mix_PlayChannel(-1, music::paddleHit, 1);
+    ball.collide(p2, col);
+    Mix_PlayChannel(-1, music::paddleHit, 0);
 
   } 
 
   else if ((col = checkWallCol(ball)).type != collisionType::col_none) {
     ball.collideWall(col);
-    Mix_PlayChannel(-1, music::wallHit, 1);
+    Mix_PlayChannel(-1, music::wallHit, 0);
     switch (col.type) {
       case collisionType::col_left:
         p2Score.setScore(p2Score.m_score++);

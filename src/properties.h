@@ -30,7 +30,7 @@ constexpr int ballRadius{15};
 constexpr int paddleWidth{10};
 constexpr int paddleHeight{120};
 constexpr float paddleSpeed{1.0f};
-constexpr float ballSpeed{1.0f};
+constexpr float ballSpeed{0.7f};
 // the slowness impact multiplier of the velocity after a collision occurs
 constexpr float collisionImpactVelocity{0.75};
 }  // namespace entity_data
