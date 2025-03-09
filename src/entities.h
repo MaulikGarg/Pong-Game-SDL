@@ -3,8 +3,7 @@
 
 #include "2dvector.h"
 #include "properties.h"
-
-enum class collisionType { col_none, col_top, col_middle, col_bottom, col_left, col_right, col_max };
+enum class collisionType { col_none, col_paddle, col_top, col_bottom, col_left, col_right, col_max };
 
 // this struct represents the type of collision and the penetrated x represents
 // the pixels to move the ball relative to a paddle before launching it in
@@ -12,19 +11,6 @@ enum class collisionType { col_none, col_top, col_middle, col_bottom, col_left, 
 struct collision {
   collisionType type;
   float penetrated;
-};
-
-class Ball {
- public:
-  Ball(Vec2d&& pre_position, Vec2d&& velocity);
-  void draw(SDL_Renderer* renderer);
-  void move(float dt);
-  void collide(const collision& col);
-  void collideWall(const collision& col);
-
-  Vec2d m_current_position;
-  Vec2d m_velocity;
-  SDL_Rect m_ball_properties;
 };
 
 class Paddle {
@@ -37,6 +23,20 @@ class Paddle {
   Vec2d m_velocity;
   SDL_Rect m_paddle_properties;
 };
+
+
+class Ball {
+  public:
+   Ball(Vec2d&& pre_position, Vec2d&& velocity);
+   void draw(SDL_Renderer* renderer);
+   void move(float dt);
+   void collide(const Paddle& paddle, const collision& col);
+   void collideWall(const collision& col);
+ 
+   Vec2d m_current_position;
+   Vec2d m_velocity;
+   SDL_Rect m_ball_properties;
+ };
 
 class Score {
  public:

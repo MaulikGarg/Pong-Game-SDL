@@ -2,6 +2,8 @@
 
 #include "properties.h"
 
+#define CONST_PI 3.1415
+
 Ball::Ball(Vec2d&& pre_position, Vec2d&& velocity)
     : m_current_position{pre_position}, m_velocity{velocity} {
   m_ball_properties.x = m_current_position.m_xPosition;
@@ -106,13 +108,6 @@ collision checkCollision(const Ball& ball, const Paddle& paddle) {
       paddleRight < ballLeft || ballRight < paddleLeft)
     return col;
 
-  // get the co ordinates of the paddle's top and middle divider
-  float paddleRangeMiddle =
-      paddleBottom -
-      1 / 0.3 * paddleHeight;  // the middle is 1/3 above the bottom
-  float paddleRangeTop = paddleRangeMiddle -
-                         1 / 0.3 * paddleHeight;  // the top is 1/3 above middle
-
   // penetration ;) in this wholesome game,
   // refers to how deep the L/R edge of the ball rectangle goes
   // inside the R/L edge of the paddle rectangle when the ball is collided
@@ -128,14 +123,7 @@ collision checkCollision(const Ball& ball, const Paddle& paddle) {
     col.penetrated = paddleLeft - ballRight;
   }
 
-  // now check for which part (top/middle/bottom) the collision happened
-  if (ballBottom > paddleTop && ballBottom < paddleRangeTop) {
-    col.type = collisionType::col_top;
-  } else if (ballBottom > paddleRangeTop && ballBottom < paddleRangeMiddle) {
-    col.type = collisionType::col_middle;
-  } else {
-    col.type = collisionType::col_bottom;
-  }
+  col.type = collisionType::col_paddle;
 
   return col;
 }
@@ -167,15 +155,17 @@ collision checkWallCol(const Ball& ball) {
   return col;
 }
 
-void Ball::collide(const collision& col) {
-  m_current_position.m_xPosition += col.penetrated;
-  m_velocity.m_xPosition *= -1;
+void Ball::collide(const Paddle& paddle, const collision& col) {  
 
-  if (col.type == collisionType::col_top) {
-    m_velocity.m_yPosition = -0.75f * entity_data::ballSpeed;
-  } else if (col.type == collisionType::col_bottom) {
-    m_velocity.m_yPosition = 0.75f * entity_data::ballSpeed;
-  }
+  // check ball velocity direction
+  int direction = m_velocity.m_xPosition < 0 ? 1 : -1;
+
+  m_current_position.m_xPosition += col.penetrated + direction * entity_data::ballRadius;
+
+  double angle { (m_current_position.m_yPosition - paddle.m_current_position.m_yPosition)/(entity_data::paddleHeight/2) * CONST_PI/4};
+  m_velocity.m_xPosition = entity_data::ballSpeed * cos (angle) * direction;
+  m_velocity.m_yPosition = entity_data::ballSpeed * sin (angle);
+  
 }
 
 void Ball::collideWall(const collision& col) {
@@ -190,7 +180,7 @@ void Ball::collideWall(const collision& col) {
   // for LR walls, reset ball to top center and launch
   m_current_position.m_xPosition = screen_width / 2 - m_ball_properties.w;
   m_current_position.m_yPosition = 10.0f;
-  m_velocity.m_yPosition = 0.75 * entity_data::ballSpeed;
+  m_velocity.m_yPosition = entity_data::collisionImpactVelocity * entity_data::ballSpeed;
 
   if (col.type == collisionType::col_left) {
     m_velocity.m_xPosition = entity_data::ballSpeed;

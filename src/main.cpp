@@ -14,7 +14,8 @@ void handleKeyDown(const SDL_Event& event, std::array<bool, 4>& buttons,
                    Ball& ball);
 void handleKeyUp(const SDL_Event& event, std::array<bool, 4>& buttons);
 // update the paddle state per frame according to the buttons pressed
-void collisionHandler(Ball& ball, Paddle& p1, Paddle& p2, Score& p1Score, Score& p2Score  );
+void collisionHandler(Ball& ball, Paddle& p1, Paddle& p2, Score& p1Score,
+                      Score& p2Score);
 void updatePaddles(const std::array<bool, 4>& buttons, Paddle& p1, Paddle& p2);
 void close();
 
@@ -266,21 +267,24 @@ void updatePaddles(const std::array<bool, 4>& buttons, Paddle& p1, Paddle& p2) {
     p2.m_velocity.m_yPosition = 0.0f;
 }
 
-void collisionHandler(Ball& ball, Paddle& p1, Paddle& p2, Score& p1Score, Score& p2Score ){
+void collisionHandler(Ball& ball, Paddle& p1, Paddle& p2, Score& p1Score,
+                      Score& p2Score) {
   collision col{};
 
-  if ((col = checkCollision(ball, p1)).type != collisionType::col_none) {
-    ball.collide(col);
+  if ((col = checkCollision(ball, p1)).type == collisionType::col_paddle) {
+
+    ball.collide(p1, col);
     Mix_PlayChannel(-1, music::paddleHit, 1);
 
+  } else if ((col = checkCollision(ball, p2)).type ==
+             collisionType::col_paddle) {
 
-  } else if ((col = checkCollision(ball, p2)).type !=
-             collisionType::col_none) {
-    ball.collide(col);
+    ball.collide(p1, col);
     Mix_PlayChannel(-1, music::paddleHit, 1);
 
+  } 
 
-  } else if ((col = checkWallCol(ball)).type != collisionType::col_none) {
+  else if ((col = checkWallCol(ball)).type != collisionType::col_none) {
     ball.collideWall(col);
     Mix_PlayChannel(-1, music::wallHit, 1);
     switch (col.type) {
